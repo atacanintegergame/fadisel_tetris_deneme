@@ -148,8 +148,8 @@ Transform:
   m_GameObject: {fileID: 91746605}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -3.17, z: -0.13295746}
-  m_LocalScale: {x: 0.866302, y: 0.866302, z: 0.866302}
+  m_LocalPosition: {x: -0.00000023842, y: -3.17, z: -0.13295746}
+  m_LocalScale: {x: 0.6365847, y: 0.6365847, z: 0.6365847}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 140230784}
@@ -270,7 +270,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 3.16, y: 1.47, z: -0.13295746}
-  m_LocalScale: {x: 0.51386, y: 0.51386, z: 0.51386}
+  m_LocalScale: {x: 0.38668478, y: 0.38668478, z: 0.38668478}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 140230784}
@@ -354,7 +354,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.51, y: -2.17, z: -0.13295746}
-  m_LocalScale: {x: 0.609586, y: 0.573728, z: 0.71716}
+  m_LocalScale: {x: 0.5126009, y: 0.4824479, z: 0.6030598}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 140230784}
@@ -740,7 +740,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 100
   m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 0.5176471}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.78039217}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -792,7 +792,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0.63, y: -1.07, z: -0.13295746}
-  m_LocalScale: {x: 0.7149126, y: 0.7149126, z: 0.7149126}
+  m_LocalScale: {x: 0.37368482, y: 0.37368482, z: 0.37368482}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 140230784}
@@ -876,7 +876,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0.1, z: -0.13295746}
-  m_LocalScale: {x: 0.32621238, y: 0.35698718, z: 0.49239606}
+  m_LocalScale: {x: 0.23971064, y: 0.2623249, z: 0.3618274}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 140230784}
@@ -969,6 +969,7 @@ MonoBehaviour:
   skillBarPrefab: {fileID: 600827478080565687, guid: e30a291687103f4499accd74dc182789, type: 3}
   skillBarYOffset: 2
   skillBarSpacing: 1
+  factorySkillPool: 020000000100000003000000
   animalSprites:
   - {fileID: 0}
   - {fileID: 21300000, guid: 30f458335382e2e4c9b906945804053f, type: 3}
@@ -1042,6 +1043,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   dragIconRenderer: {fileID: 1221448734}
+  snapRadius: 2
 --- !u!4 &2086298545
 Transform:
   m_ObjectHideFlags: 0

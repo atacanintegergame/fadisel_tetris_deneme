@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -6,18 +6,22 @@ public class BoardManager : MonoBehaviour
 {
     public static BoardManager I;
 
-    [Header("Level ve Grid Ayarlarý")]
+    [Header("Level ve Grid AyarlarÄ±")]
     public LevelData currentLevel;
     public GameObject tilePrefab;       // Kediler
-    public GameObject skillTilePrefab;  // Oyun alanýndaki (Grid) noktalar
+    public GameObject skillTilePrefab;  // Oyun alanÄ±ndaki (Grid) noktalar
     public float spacing = 1.3f;
 
-    [Header("Skill Bar Ayarlarý")]
-    public GameObject skillBarPrefab;   // <-- YENÝ: Sadece alt bar için özel prefab!
+    [Header("Skill Bar AyarlarÄ±")]
+    public GameObject skillBarPrefab;   // Alt bar kutularÄ±
     public float skillBarYOffset = 3.0f;
-    public float skillBarSpacing = 1.8f; // Bar kutularý daha geniþ aralýklý olabilir
+    public float skillBarSpacing = 1.6f;
 
-    [Header("Görseller")]
+    [Header("Fabrika Ãœretim Listesi")]
+    // ðŸ‘‡ BURASI YENÄ°: Hangi skillerin Ã§Ä±kacaÄŸÄ±nÄ± buradan seÃ§eceksin
+    public List<SkillType> factorySkillPool;
+
+    [Header("GÃ¶rseller")]
     public Sprite[] animalSprites;
     public Sprite[] skillSprites;
 
@@ -78,7 +82,7 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        // 2. Oyun Alaný Noktalarý (Eski Prefab'ý kullanýr)
+        // 2. Oyun AlanÄ± NoktalarÄ±
         for (int y = 0; y < height - 1; y++)
         {
             for (int x = 0; x < width - 1; x++)
@@ -86,7 +90,7 @@ public class BoardManager : MonoBehaviour
                 float nodeX = startX + (x * spacing) + (spacing / 2f);
                 float nodeY = startY + (y * spacing) + (spacing / 2f);
 
-                GameObject go = Instantiate(skillTilePrefab, transform); // <-- BURASI ESKÝSÝ
+                GameObject go = Instantiate(skillTilePrefab, transform);
                 go.transform.localPosition = new Vector3(nodeX, nodeY, 0);
 
                 SkillTile node = go.GetComponent<SkillTile>();
@@ -100,7 +104,11 @@ public class BoardManager : MonoBehaviour
     {
         bottomSkillBar = new List<SkillTile>();
         int barCount = 4;
+
+        // BarÄ± ortalamak iÃ§in matematik
         float barStartX = -((barCount - 1) * skillBarSpacing) / 2f;
+
+        // BarÄ±n Y konumu
         float gridBottomY = -((currentLevel.rows.Count - 1) * spacing) / 2f;
         float barY = gridBottomY - skillBarYOffset;
 
@@ -109,26 +117,43 @@ public class BoardManager : MonoBehaviour
             float posX = barStartX + (i * skillBarSpacing);
             Vector3 pos = new Vector3(posX, barY, 0);
 
-            // <-- ÝÞTE BURASI DEÐÝÞTÝ: Artýk yeni prefabý yaratýyoruz!
             GameObject go = Instantiate(skillBarPrefab, transform);
             go.transform.localPosition = pos;
 
-            if (i == 3) go.name = "Factory_Slot";
-            else go.name = $"Inventory_Slot_{i}";
-
             SkillTile sTile = go.GetComponent<SkillTile>();
+
+            // Ã–NCE Setup yapÄ±yoruz (Bu sÄ±rada ismi SkillTile_3_-99 yapÄ±yor)
             sTile.Setup(i, -99);
+
+            // SONRA ismini biz veriyoruz (Son sÃ¶z bizim!)
+            if (i == 3) go.name = "Factory_Slot"; // Fabrika
+            else go.name = $"Inventory_Slot_{i}"; // Depo
+
             bottomSkillBar.Add(sTile);
         }
     }
 
+    // --- GÃœNCELLENEN KISIM: LÄ°STEDEN SEÃ‡ME ---
     public void SpawnSkillInFactory()
     {
         if (bottomSkillBar == null || bottomSkillBar.Count < 4) return;
-        SkillTile factoryTile = bottomSkillBar[3];
+        SkillTile factoryTile = bottomSkillBar[3]; // Son kutu Fabrika
+
+        // Zaten doluysa Ã¼retme
         if (factoryTile.currentSkill != SkillType.Bos) return;
-        int randomSkillIndex = Random.Range(1, 12);
-        SkillType randomSkill = (SkillType)randomSkillIndex;
-        factoryTile.SetSkill(randomSkill);
+
+        // EÄžER LÄ°STE BOÅžSA HATA VERMESÄ°N DÄ°YE KONTROL
+        if (factorySkillPool == null || factorySkillPool.Count == 0)
+        {
+            Debug.LogWarning("âš ï¸ Factory Skill Pool boÅŸ! LÃ¼tfen Inspector'dan skill ekleyin.");
+            return;
+        }
+
+        // Listeden rastgele bir tane seÃ§
+        int randomIndex = Random.Range(0, factorySkillPool.Count);
+        SkillType selectedSkill = factorySkillPool[randomIndex];
+
+        factoryTile.SetSkill(selectedSkill);
+        Debug.Log("Fabrika Ãœretti: " + selectedSkill);
     }
 }
