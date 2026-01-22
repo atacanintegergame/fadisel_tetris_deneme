@@ -11,6 +11,6 @@ public class SkillTile : MonoBehaviour
     {
         x = gridX;
         y = gridY;
-        name = $"SkillNode_{x}_{y}";
+        name = $"SkillTile_{x}_{y}";
     }
 }
