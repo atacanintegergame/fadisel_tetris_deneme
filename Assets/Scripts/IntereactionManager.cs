@@ -1,18 +1,17 @@
 ﻿using UnityEngine;
+using System.Collections; // Coroutine için gerekli
 
 public class InteractionManager : MonoBehaviour
 {
     public static InteractionManager I;
 
     [Header("Görsel Ayarlar")]
-    public SpriteRenderer dragIconRenderer; // Sürüklediğimiz kopya görsel
+    public SpriteRenderer dragIconRenderer;
+    public float snapRadius = 1.0f;
 
-    [Header("Hassasiyet Ayarları")]
-    public float snapRadius = 1.0f; // Ne kadar yakınına gelirse yapışsın? (Project A'daki distanceThreshold gibi)
-
-    private SkillTile sourceTile;   // Skilli nereden aldık?
+    private SkillTile sourceTile;
     private bool isDragging = false;
-    private Vector3 originalPosition; // Sürüklemeye başladığımız koordinat (Geri dönüş için)
+    private Vector3 originalPosition;
 
     private void Awake()
     {
@@ -20,43 +19,38 @@ public class InteractionManager : MonoBehaviour
         if (dragIconRenderer)
         {
             dragIconRenderer.gameObject.SetActive(false);
-            // Sürüklenen parça her zaman en önde gözüksün
             dragIconRenderer.sortingOrder = 100;
         }
     }
 
     private void Update()
     {
-        // 1. TIKLAMA ANI (OnBeginDrag Mantığı)
+        // 1. TIKLAMA ANI
         if (Input.GetMouseButtonDown(0))
         {
             Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-
-            // Tıkladığımız yerdeki her şeye bak (UI gibi davranması için RaycastAll)
             RaycastHit2D[] hits = Physics2D.RaycastAll(mousePos, Vector2.zero);
 
             foreach (var hit in hits)
             {
                 SkillTile clickedTile = hit.collider.GetComponent<SkillTile>();
-
-                // Sadece dolu olan kutuları tutabiliriz
                 if (clickedTile != null && clickedTile.currentSkill != SkillType.Bos)
                 {
                     StartDrag(clickedTile);
-                    break; // İlk bulduğunu tut, gerisine bakma
+                    break;
                 }
             }
         }
 
-        // 2. SÜRÜKLEME ANI (OnDrag Mantığı)
+        // 2. SÜRÜKLEME ANI
         if (isDragging && Input.GetMouseButton(0))
         {
             Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mousePos.z = 0; // Z eksenini sabitle
+            mousePos.z = 0;
             dragIconRenderer.transform.position = mousePos;
         }
 
-        // 3. BIRAKMA ANI (OnEndDrag Mantığı)
+        // 3. BIRAKMA ANI
         if (isDragging && Input.GetMouseButtonUp(0))
         {
             DropSkill();
@@ -67,22 +61,12 @@ public class InteractionManager : MonoBehaviour
     {
         sourceTile = tile;
         isDragging = true;
-
-        // 1. Kaynak Tile'ın pozisyonunu kaydet
         originalPosition = tile.transform.position;
 
-        // 2. DragIcon'u tam resmin olduğu yere taşı
-        // (Dikkat: tile.transform.position yerine tile.iconRenderer.transform.position kullanıyoruz)
         dragIconRenderer.transform.position = tile.iconRenderer.transform.position;
-
-        // --- İŞTE ÇÖZÜM BURASI ---
-        // localScale yerine "lossyScale" kullanıyoruz.
-        // Bu, hem kutunun hem de resmin toplam büyüklüğünü alır.
         dragIconRenderer.transform.localScale = tile.iconRenderer.transform.lossyScale;
-
         dragIconRenderer.sprite = BoardManager.I.skillSprites[(int)tile.currentSkill];
 
-        // 3. Görünür yap ve yerdekini gizle
         dragIconRenderer.gameObject.SetActive(true);
         tile.iconRenderer.enabled = false;
     }
@@ -90,16 +74,13 @@ public class InteractionManager : MonoBehaviour
     void DropSkill()
     {
         isDragging = false;
+        if (dragIconRenderer) dragIconRenderer.gameObject.SetActive(false); // Hayaleti kapat
 
-        // Mouse'un olduğu yer
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
 
-        // --- EN YAKIN KUTUYU BULMA (Project A'daki FindClosestSkillTile mantığı) ---
         SkillTile closestTile = null;
         float minDistance = float.MaxValue;
-
-        // Sahnedeki o noktaya yakın tüm objeleri tara
         Collider2D[] colliders = Physics2D.OverlapCircleAll(mousePos, snapRadius);
 
         foreach (var col in colliders)
@@ -116,64 +97,69 @@ public class InteractionManager : MonoBehaviour
             }
         }
 
-        // --- KARAR ANI ---
-        bool isSuccess = false;
+        bool transactionSuccess = false;
 
         if (closestTile != null)
         {
-            // 1. Kural: Kendisine geri bırakırsa işlem iptal (Ama başarılı sayılır, yerine oturur)
+            // Kural: Kendi yerine bırakırsa iptal
             if (closestTile == sourceTile)
             {
-                isSuccess = false; // "İşlem yapılmadı" olarak işaretle ki yerine dönsün
+                transactionSuccess = false;
             }
-            // 2. Kural: Hedef boşsa yerleştir
+            // Kural: Hedef BOŞSA -> Oraya koy VE ÇALIŞTIR
             else if (closestTile.currentSkill == SkillType.Bos)
             {
-                // Fabrika Koruması: Fabrikaya dışarıdan mal giremez
                 if (closestTile.name == "Factory_Slot" && sourceTile.name != "Factory_Slot")
                 {
                     Debug.Log("⛔ Fabrikaya geri ürün koyamazsın!");
-                    isSuccess = false;
+                    transactionSuccess = false;
                 }
                 else
                 {
-                    // TRANSFER BAŞARILI!
+                    // 1. Skilli hedefe yerleştir
                     closestTile.SetSkill(sourceTile.currentSkill);
-                    sourceTile.SetSkill(SkillType.Bos); // Eskisini boşalt
 
-                    // Eğer Fabrikadan aldıysak yenisini üret
+                    // 2. Kaynağı temizle
+                    sourceTile.SetSkill(SkillType.Bos);
+
+                    // --- KRİTİK DÜZELTME BURADA ---
                     if (sourceTile.name == "Factory_Slot")
                     {
+                        // Görünürlüğü tekrar aç ki yeni üretilen skill görünsün!
+                        sourceTile.iconRenderer.enabled = true;
                         BoardManager.I.SpawnSkillInFactory();
                     }
 
-                    isSuccess = true;
+                    // 3. ANINDA ETKİLEŞİM (Sadece oyun alanı için)
+                    if (closestTile.y != -99)
+                    {
+                        StartCoroutine(ExecuteAndClearRoutine(closestTile));
+                    }
+
+                    transactionSuccess = true;
                 }
             }
         }
 
-        // --- SONUÇ ---
-
-        // İşlem bittiği için DragIcon'u kapat
-        dragIconRenderer.gameObject.SetActive(false);
-
-        if (isSuccess)
+        // Başarısızsa eve dön
+        if (!transactionSuccess && sourceTile != null)
         {
-            // Başarılıysa zaten yeni yere yerleşti, eski yer (sourceTile) boşaltıldı veya yenilendi.
-            // Sadece görseli açmamız gerekiyorsa (Factory durumunda) açalım.
-            if (sourceTile.currentSkill != SkillType.Bos)
-                sourceTile.iconRenderer.enabled = true;
-            else
-                sourceTile.iconRenderer.enabled = true; // Boş olsa bile renderer açık kalsın
-        }
-        else
-        {
-            // --- RETURN START POS (Eski yerine geri dön) ---
-            // Eğer koyacak yer bulamadıysa veya yasaklıysa
-            Debug.Log("↩️ Yerine dönüyor...");
-            sourceTile.iconRenderer.enabled = true; // Görseli geri aç
+            sourceTile.iconRenderer.enabled = true;
         }
 
         sourceTile = null;
+    }
+
+    // --- SKILL ÇALIŞTIRMA VE TEMİZLEME RUTİNİ ---
+    IEnumerator ExecuteAndClearRoutine(SkillTile tile)
+    {
+        // 1. Skilli çok kısa (0.2sn) göster ki oyuncu ne koyduğunu algılasın
+        yield return new WaitForSeconds(0.2f);
+
+        // 2. Efekti patlat! (SkillManager'ı çağır)
+        SkillManager.I.ApplySkillEffect(tile);
+
+        // 3. Skilli kutudan sil (Kullanıldı bitti)
+        tile.SetSkill(SkillType.Bos);
     }
 }

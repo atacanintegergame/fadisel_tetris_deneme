@@ -33,6 +33,7 @@ public class BoardManager : MonoBehaviour
     {
         I = this;
     }
+    
 
     private void Start()
     {
@@ -155,5 +156,42 @@ public class BoardManager : MonoBehaviour
 
         factoryTile.SetSkill(selectedSkill);
         Debug.Log("Fabrika Üretti: " + selectedSkill);
+    }
+    // --- EKSİK OLAN PARÇALAR ---
+
+    public Tile GetTile(int x, int y)
+    {
+        // Grid sınırları içinde mi diye kontrol et
+        if (grid == null || x < 0 || x >= grid.GetLength(0) || y < 0 || y >= grid.GetLength(1))
+            return null;
+
+        return grid[x, y];
+    }
+
+    public void SwapTiles(int x1, int y1, int x2, int y2)
+    {
+        Tile tile1 = GetTile(x1, y1);
+        Tile tile2 = GetTile(x2, y2);
+
+        // İki tile da mevcutsa yer değiştir
+        if (tile1 != null && tile2 != null)
+        {
+            // 1. GÖRSEL OLARAK YER DEĞİŞTİR (Pozisyonları takas et)
+            Vector3 tempPos = tile1.transform.localPosition;
+            tile1.transform.localPosition = tile2.transform.localPosition;
+            tile2.transform.localPosition = tempPos;
+
+            // 2. MATEMATİKSEL OLARAK YER DEĞİŞTİR (Array içindeki yerleri takas et)
+            grid[x1, y1] = tile2;
+            grid[x2, y2] = tile1;
+
+            // 3. Tile içindeki koordinat bilgisini güncelle (Eğer Tile scriptinde x,y tutuyorsan)
+            // tile1.Setup(x2, y2, ...); // Gerekirse burası açılır ama şimdilik görsel yetiyor.
+
+            // 4. İsimleri değiştir (Hierarchy'de takip etmek kolay olsun)
+            string tempName = tile1.name;
+            tile1.name = tile2.name;
+            tile2.name = tempName;
+        }
     }
 }
